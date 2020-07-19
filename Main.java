@@ -6,27 +6,81 @@ import java.util.Random;
 public class Main {
     public static void main(String[] args) {
         TTTBoard gameBoard = new TTTBoard();
+        boolean playGame = true;
+        String[] gameplay;
+
+        do {
+            gameBoard.initialState();
+            gameplay = menu();
+            if (gameplay[0].equals("exit")) {
+                playGame = false;
+                continue;
+            }
+            gameLoop(gameBoard, gameplay[1], gameplay[2]);
+        } while (playGame);
+    }
+
+    private static void gameLoop(TTTBoard gameBoard, String player1, String player2) {
+        String[] players = {player1, player2};
         gameBoard.printBoard();
+
         int move = 0;
         do {
-            switch (move) {
-                case 0:
-                if (gameBoard.play(humanPlayer())) {
-                    move = (move + 1) % 2;
-                } else {
-                    System.out.println("This cell is occupied! Choose another one!");
-                }
-                break;
-                case 1:
+            switch (players[move]) {
+                case "user":
+                    if (gameBoard.play(humanPlayer())) {
+                        move = (move + 1) % 2;
+                        gameBoard.printBoard();
+                    } else {
+                        System.out.println("This cell is occupied! Choose another one!");
+                    }
+                    break;
+                case "easy":
                     if (gameBoard.play(computerPlayer())) {
                         System.out.println("Making move level \"easy\"");
                         move = (move + 1) % 2;
+                        gameBoard.printBoard();
                     }
+                    break;
+                default:
+                    break;
             }
-            gameBoard.printBoard();
         } while (gameBoard.boardStatus().equals(TTTBoard.BoardStates.NOT_DONE.getMessage()));
 
-        System.out.println(gameBoard.boardStatus());
+        System.out.println(gameBoard.boardStatus() + '\n');
+    }
+
+    private static String getInput() {
+        Scanner input = new Scanner(System.in);
+        return input.nextLine();
+    }
+
+    /**
+     * Handle the menu input at the beginning of each game. Validates the command and player
+     * choices.
+     *
+     * @return a String[] with the command and player choices
+     */
+    private static String[] menu() {
+        String[] command;
+
+        while (true) {
+            System.out.print("Input command: ");
+            command = getInput().split(" ");
+            if ((command.length == 1) && command[0].equals("exit")) {
+                break;
+            }
+            if ((command.length == 3) && command[0].equals("start")) {
+                if (command[1].equals("user") || command[1].equals("easy")) {
+                    if (command[2].equals("user") || command[2].equals("easy")) {
+                        break;
+                    }
+                }
+            }
+            System.out.println("Bad parameters!");
+        }
+
+        return command;
     }
 
     private static int humanPlayer() {

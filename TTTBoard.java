@@ -27,23 +27,14 @@ public class TTTBoard {
     }
 
     TTTBoard() {
-        this.board = "_________".toCharArray();
+        initialState();
+    }
+
+    public void initialState() {
+        board = "         ".toCharArray();
         countO = 0;
         countX = 0;
     }
-
-//    TTTBoard(String board) {
-//        this.board = board.toCharArray();
-//
-//        for (int i = 0; i < board.length(); i++) {
-//            if (this.board[i] == 'X') {
-//                countX++;
-//            }
-//            if (this.board[i] == 'O') {
-//                countO++;
-//            }
-//        }
-//    }
 
     public void printBoard() {
         System.out.println(BORDER);
@@ -63,7 +54,7 @@ public class TTTBoard {
         } while (state == BoardStates.NOT_DONE && i < 8);
 
         if (state == BoardStates.NOT_DONE) {
-            if (!String.valueOf(board).contains("_")) {
+            if (!String.valueOf(board).contains(" ")) {
                 state = BoardStates.DRAW;
             }
         }
@@ -75,7 +66,7 @@ public class TTTBoard {
         BoardStates state = BoardStates.NOT_DONE;
 
         if ((board[line[0]] == board[line[1]]) && (board[line[1]] == board[line[2]])) {
-            if (board[line[0]] != '_') {
+            if (board[line[0]] != ' ') {
                 state = (board[line[0]] == 'X') ? BoardStates.XWON : BoardStates.OWON;
             }
         }
@@ -84,7 +75,7 @@ public class TTTBoard {
     }
 
     public boolean play(int move) {
-        if (board[move] == '_') {
+        if (board[move] == ' ') {
             if (countO == countX) {
                 board[move] = 'X';
                 countX++;
