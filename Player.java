@@ -1,38 +1,40 @@
 package tictactoe;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
-public interface Player {
-    Random num = new Random();
+abstract public class Player {
+    protected int player;
 
-    static Player AI(String type) {
+    Player(int player) {
+        this.player = player;
+    }
+
+    static Player AI(String type, int player) {
         switch (type) {
             case "user":
-                return new Human();
+                return new Human(player);
             case "easy":
-                return new Easy();
+                return new Easy(player);
             case "medium":
-                return new Medium();
-//            case "hard":
-//                return Hard();
+                return new Medium(player);
+            case "hard":
+                return new Hard(player);
         }
-        return new Human();
+        return new Human(player);
     }
 
-    default void randomMove() {
-        int space;
-        do {
-            space = 6 + num.nextInt(3) - (3 * num.nextInt(3));
-        } while (!TTTBoard.isCellEmpty(space));
-        TTTBoard.setCell(space);
-    }
-
-    void move(TTTBoard board, int move);
+    abstract void move(TTTBoard board);
 }
 
-class Human implements Player {
-    public void move(TTTBoard board, int move) {
+class Human extends Player {
+    public Human(int player) {
+        super(player);
+    }
+
+    public void move(TTTBoard board) {
         Scanner input = new Scanner(System.in);
         boolean valid = false;
         int cell = 0;
@@ -65,37 +67,139 @@ class Human implements Player {
             }
 
             cell = 6 + (col - 1) - (3 * (row - 1));
-            if (TTTBoard.isCellEmpty(cell)) {
+            if (board.isCellEmpty(cell)) {
                 valid = true;
             } else {
                 System.out.println("This cell is occupied! Choose another one!");
             }
         } while (!valid);
 
-        TTTBoard.setCell(cell);
+        board.setCell(cell, player);
     }
 }
 
-class Easy implements Player {
-    public void move(TTTBoard board, int move) {
+class Easy extends Player {
+    Random num = new Random();
+
+    Easy(int player) {
+        super(player);
+    }
+
+    protected void randomMove(TTTBoard board) {
+        int space;
+        do {
+            space = 6 + num.nextInt(3) - (3 * num.nextInt(3));
+        } while (!board.isCellEmpty(space));
+        board.setCell(space, player);
+    }
+
+    public void move(TTTBoard board) {
         System.out.println("Making move level \"easy\"");
-        randomMove();
+        randomMove(board);
     }
 }
 
-class Medium implements Player {
-    public void move(TTTBoard board, int move) {
-        System.out.println("Making move level \"medium\"");
-        int[] getMove = board.checkBoard();
-        int win   = move == 0 ? getMove[0] : getMove[1];
-        int block = move == 0 ? getMove[1] : getMove[0];
+class Medium extends Easy {
+    Medium(int player) {
+        super(player);
+    }
 
-        if (win != 9) {
-            TTTBoard.setCell(board.getEmptySpace(win));
-        } else if (block != 9) {
-            TTTBoard.setCell(board.getEmptySpace(block));
+    @Override
+    public void move(TTTBoard board) {
+        System.out.println("Making move level \"medium\"");
+
+        // see if we can play to win
+        int play = board.checkForTwo(player);
+        if (play < 8) {
+            board.setCell(board.getEmptySpace(play), player);
+            return;
+        }
+
+        // see if we have to block
+        play = board.checkForTwo((player + 1) % 2);
+        if (play < 8) {
+            board.setCell(board.getEmptySpace(play), player);
+            return;
+        }
+
+        // no winning or blocking move, so move randomly
+        randomMove(board);
+    }
+}
+
+class Hard extends Player {
+    static class Result {
+        int play;
+        int score;
+
+        Result(int play, int score) {
+            this.play = play;
+            this.score = score;
+        }
+    }
+
+    Hard(int player) {
+        super(player);
+    }
+
+    @Override
+    public void move(TTTBoard board) {
+        System.out.println("Making move level \"hard\"");
+
+        int bestScore = Integer.MIN_VALUE;
+        int bestMove  = -1;
+        List<Integer> empties = board.emptySpaces();
+        for (int empty : empties) {
+            board.setCell(empty, player);
+            int score = minimax(board, (player + 1) % 2);
+            board.setCell(empty, -1);
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = empty;
+            }
+        }
+//        int playToMake = minimax(aiBoard, player);
+        board.setCell(bestMove, player);
+    }
+
+    private int minimax(TTTBoard board, int move) {
+        // check if there's a winner or draw, and return a score
+        TTTBoard.BoardStates status = board.boardStatus();
+        switch (status) {
+            case X_WON:
+                return player == 0 ? 10 : -10;
+            case O_WON:
+                return player == 1 ? 10 : -10;
+            case DRAW:
+                return 0;
+        }
+
+        List<Result> results = new ArrayList<>();
+        List<Integer> emptySpaces = board.emptySpaces();    // get all empty spaces...
+
+        for (Integer emptySpace : emptySpaces) {      // ... and loop through them
+            board.setCell(emptySpace, move);
+            results.add(new Result(emptySpace, minimax(board, ((move + 1) % 2)))); // collect scores from all plays
+            board.setCell(emptySpace, -1);
+        }
+
+        if (move == player) {
+            int max = Integer.MIN_VALUE;
+            for (Result r : results) {
+                if (r.score > max) {
+                    max = r.score;
+                }
+            }
+            return max;
         } else {
-            randomMove();
+            int min = Integer.MAX_VALUE;
+            for (Result r : results) {
+                if (r.score < min) {
+                    min = r.score;
+                }
+            }
+            return min;
         }
     }
 }

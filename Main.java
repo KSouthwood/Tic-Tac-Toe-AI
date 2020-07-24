@@ -21,18 +21,18 @@ public class Main {
 
     private static void gameLoop(TTTBoard gameBoard, String player1, String player2) {
         Player[] players = new Player[2];
-        players[0] = Player.AI(player1);
-        players[1] = Player.AI(player2);
+        players[0] = Player.AI(player1, 0);
+        players[1] = Player.AI(player2, 1);
         gameBoard.printBoard();
 
         int move = 0;
         do {
-            players[move].move(gameBoard, move);
+            players[move].move(gameBoard);
             move = (move + 1) % 2;
             gameBoard.printBoard();
-        } while (gameBoard.boardStatus().equals(TTTBoard.BoardStates.NOT_DONE.getMessage()));
+        } while (gameBoard.boardStatus().equals(TTTBoard.BoardStates.NOT_DONE));
 
-        System.out.println(gameBoard.boardStatus() + '\n');
+        System.out.println(gameBoard.boardStatus().getMessage() + '\n');
     }
 
     private static String getInput() {
@@ -57,9 +57,9 @@ public class Main {
             }
             if ((command.length == 3) && command[0].equals("start")) {
                 if (command[1].equals("user") || command[1].equals("easy") ||
-                command[1].equals("medium")) {
+                command[1].equals("medium") || command[1].equals("hard")) {
                     if (command[2].equals("user") || command[2].equals("easy") ||
-                            command[2].equals("medium")) {
+                            command[2].equals("medium") || command[2].equals("hard")) {
                         break;
                     }
                 }
